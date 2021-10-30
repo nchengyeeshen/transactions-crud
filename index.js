@@ -2,6 +2,12 @@ const { PrismaClient } = require("@prisma/client");
 const dotenv = require("dotenv");
 const express = require("express");
 const bodyParser = require("body-parser");
+const {
+  getTransaction,
+  createTransaction,
+  getTransactions,
+  updateTransaction,
+} = require("./handlers");
 
 const host = process.env.host || "localhost";
 const port = process.env.port || 3000;
@@ -13,6 +19,9 @@ const main = async () => {
   // Load environment variables
   dotenv.config();
 
+  // Add dependencies to express app
+  app.prisma = prisma;
+
   // Define middleware
   app.use(bodyParser.json());
 
@@ -21,101 +30,11 @@ const main = async () => {
     res.send("Hello world!");
   });
 
-  // Show a given transaction
-  app.get("/transactions/:id", async (req, res) => {
-    const transaction = await prisma.transaction.findUnique({
-      where: {
-        id: req.params.id,
-      },
-    });
-    res.send({
-      transaction: transaction,
-    });
-  });
-
-  // Create a transaction
-  app.post("/transactions/", async (req, res) => {
-    if (req.body === undefined) {
-      res.statusCode = 400;
-      res.send({ error: "empty request body" });
-      return;
-    }
-
-    if (
-      req.body.description === undefined ||
-      req.body.description.length === 0
-    ) {
-      res.statusCode = 400;
-      res.send({ error: "description not provided or empty" });
-      return;
-    }
-
-    if (req.body.credit === undefined && req.body.debit === undefined) {
-      res.statusCode = 400;
-      res.send({ error: "no credit or debit amount provided" });
-      return;
-    }
-
-    if (req.body.credit !== undefined && req.body.debit !== undefined) {
-      res.statusCode = 400;
-      res.send({
-        error: "only credit or debit amount should be provided, but not both",
-      });
-      return;
-    }
-
-    try {
-      const transaction = await prisma.transaction.create({
-        data: {
-          description: req.body.description,
-          credit: req.body.credit ? parseFloat(req.body.credit) : 0.0,
-          debit: req.body.debit ? parseFloat(req.body.debit) : 0.0,
-        },
-      });
-
-      res.statusCode = 200;
-      res.send({ transaction: transaction });
-    } catch {
-      console.error("failed to create transaction");
-      res.statusCode = 500;
-      res.send({ error: "internal server error" });
-    }
-  });
-
-  // Get all transactions
-  app.get("/transactions", async (_, res) => {
-    try {
-      const transactions = await prisma.transaction.findMany();
-      res.statusCode = 200;
-      res.send(transactions);
-    } catch {
-      console.error("failed to get all transactions");
-      res.statusCode = 500;
-      res.send({ error: "internal server error" });
-    }
-  });
-
-  // Update a transaction
-  app.patch("/transactions/:id", async (req, res) => {
-    try {
-      const transaction = await prisma.transaction.update({
-        where: {
-          id: req.params.id,
-        },
-        data: {
-          description: req.body.description,
-          credit: req.body.credit,
-          debit: req.body.debit,
-        },
-      });
-
-      res.statusCode = 200;
-      res.send({ transaction: transaction });
-    } catch {
-      res.statusCode = 500;
-      res.send({ error: "internal server error" });
-    }
-  });
+  // Define routes & handlers
+  app.get("/transactions/:id", getTransaction);
+  app.post("/transactions/", createTransaction);
+  app.get("/transactions", getTransactions);
+  app.patch("/transactions/:id", updateTransaction);
 
   app.listen(port, host, () => {
     console.log(`Server is listening on ${host}:${port}`);
