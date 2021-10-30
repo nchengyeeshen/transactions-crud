@@ -82,6 +82,19 @@ const main = async () => {
     }
   });
 
+  // Get all transactions
+  app.get("/transactions", async (_, res) => {
+    try {
+      const transactions = await prisma.transaction.findMany();
+      res.statusCode = 200;
+      res.send(transactions);
+    } catch {
+      console.error("failed to get all transactions");
+      res.statusCode = 500;
+      res.send({ error: "internal server error" });
+    }
+  });
+
   app.listen(port, host, () => {
     console.log(`Server is listening on ${host}:${port}`);
   });
