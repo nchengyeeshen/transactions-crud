@@ -35,25 +35,28 @@ const main = async () => {
 
   // Create a transaction
   app.post("/transactions/", async (req, res) => {
-    if (!req.body) {
+    if (req.body === undefined) {
       res.statusCode = 400;
       res.send({ error: "empty request body" });
       return;
     }
 
-    if (!req.body.description || req.body.description.length === 0) {
+    if (
+      req.body.description === undefined ||
+      req.body.description.length === 0
+    ) {
       res.statusCode = 400;
       res.send({ error: "description not provided or empty" });
       return;
     }
 
-    if (!req.body.credit && !req.body.debit) {
+    if (req.body.credit === undefined && req.body.debit === undefined) {
       res.statusCode = 400;
       res.send({ error: "no credit or debit amount provided" });
       return;
     }
 
-    if (req.body.credit && req.body.debit) {
+    if (req.body.credit !== undefined && req.body.debit !== undefined) {
       res.statusCode = 400;
       res.send({
         error: "only credit or debit amount should be provided, but not both",
