@@ -1,5 +1,4 @@
 const { PrismaClient } = require("@prisma/client");
-const dotenv = require("dotenv");
 const express = require("express");
 const bodyParser = require("body-parser");
 const {
@@ -9,18 +8,13 @@ const {
   updateTransaction,
 } = require("./handlers");
 
-const host = process.env.host || "localhost";
-const port = process.env.port || 3000;
+const port = process.env.PORT || 3000;
 
-const prisma = new PrismaClient();
 const app = express();
 
 const main = async () => {
-  // Load environment variables
-  dotenv.config();
-
   // Add dependencies to express app
-  app.prisma = prisma;
+  app.prisma = new PrismaClient();
 
   // Define middleware
   app.use(bodyParser.json());
@@ -36,8 +30,8 @@ const main = async () => {
   app.get("/transactions", getTransactions);
   app.patch("/transactions/:id", updateTransaction);
 
-  app.listen(port, host, () => {
-    console.log(`Server is listening on ${host}:${port}`);
+  app.listen(port, () => {
+    console.log(`Server is listening on :${port}`);
   });
 };
 
@@ -46,5 +40,5 @@ main()
     throw e;
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await app.prisma.$disconnect();
   });
