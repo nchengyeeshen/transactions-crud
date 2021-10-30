@@ -95,6 +95,28 @@ const main = async () => {
     }
   });
 
+  // Update a transaction
+  app.patch("/transactions/:id", async (req, res) => {
+    try {
+      const transaction = await prisma.transaction.update({
+        where: {
+          id: req.params.id,
+        },
+        data: {
+          description: req.body.description,
+          credit: req.body.credit,
+          debit: req.body.debit,
+        },
+      });
+
+      res.statusCode = 200;
+      res.send({ transaction: transaction });
+    } catch {
+      res.statusCode = 500;
+      res.send({ error: "internal server error" });
+    }
+  });
+
   app.listen(port, host, () => {
     console.log(`Server is listening on ${host}:${port}`);
   });
